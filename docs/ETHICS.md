@@ -40,6 +40,20 @@ Como o usuário sabe que está interagindo com IA:
 - Mostra o **plano** da análise em linguagem natural antes de executar.
 - README e tool descriptions deixam claro que a sessão é 100% local.
 
+**Decisão do tipo de gráfico é do LLM, não do servidor.** Quando o usuário
+faz um pedido vago ("analisa horas por educação"), é o LLM que escolhe
+boxplot vs. histograma vs. barra, baseando-se em dtype + cardinalidade do
+schema (não em valores). O servidor MCP só valida e executa o código gerado;
+não tem regra interna do tipo "se categórica use bar". Implicações:
+
+- A escolha é reprodutível por outro LLM com o mesmo schema, mas pode
+  variar entre rodadas/modelos.
+- O usuário pode (e deve) sobrescrever explicitamente: "faz histograma",
+  "quero scatter", "agrupa por X". O LLM obedece desde que faça sentido
+  com o schema autorizado.
+- O código gerado fica visível antes de executar — usuário tem chance
+  de revisar a escolha do gráfico junto com a lógica.
+
 ---
 
 ## 4. Supervisão e Responsabilidade
@@ -48,6 +62,7 @@ Como o usuário sabe que está interagindo com IA:
 |---|---|
 | Qual dataset analisar | Usuário (path explícito) |
 | Quais colunas autorizar | Usuário (passo explícito de consent) |
+| Tipo de gráfico | LLM (heurística sobre dtype+cardinalidade do schema) — usuário pode sobrescrever |
 | Gerar código | LLM (no cliente do usuário) |
 | Validar segurança do código | MCP server (AST parser, automático) |
 | Executar código | MCP server, APENAS se AST aprovar |

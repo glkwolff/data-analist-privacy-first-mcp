@@ -126,15 +126,16 @@ def executar_analise(codigo: str, descricao: str) -> list[Any]:
 
     try:
         caminho_html = fig_para_html(fig)
+        link_html = f"[Abrir dashboard interativo](file://{caminho_html})"
     except Exception as e:  # noqa: BLE001
-        caminho_html = f"(falhou ao gravar HTML: {e})"
+        link_html = f"(falhou ao gravar HTML: {e})"
 
     resumo = resumo_markdown(fig, descricao)
 
     return [
         ImageContent(type="image", data=png_b64, mimeType="image/png"),
         TextContent(type="text", text=resumo),
-        TextContent(type="text", text=f"Versão interativa salva em: {caminho_html}"),
+        TextContent(type="text", text=link_html),
     ]
 
 

@@ -19,6 +19,9 @@ BIBLIOTECAS_PERMITIDAS = {
     "plotly.express",
     "plotly.graph_objects",
     "plotly.io",
+    "plotly.subplots",
+    "agente_dados_mcp",
+    "agente_dados_mcp.theme",
 }
 
 FUNCOES_PROIBIDAS = {

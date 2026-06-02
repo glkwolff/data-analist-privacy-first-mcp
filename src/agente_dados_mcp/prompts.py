@@ -26,8 +26,42 @@ VOCÊ (LLM) NUNCA VERÁ VALORES INDIVIDUAIS. Você gera análises baseado em sch
 APÓS CHAMAR ESTA TOOL, VOCÊ DEVE:
 1. Apresentar ao usuário o schema retornado de forma clara
 2. Destacar quais colunas foram detectadas como PII
-3. Perguntar EXPLICITAMENTE quais colunas o usuário autoriza usar em agregações
-4. Chamar `autorizar_colunas` com a lista que o usuário confirmar
+3. SUGERIR PROATIVAMENTE 3 a 5 análises interessantes que o usuário pode
+   pedir, com base no schema. Não espere o usuário pensar sozinho — abra
+   caminhos. Regras das sugestões:
+
+   - Numere de (1) a (5) no máximo, mínimo 3.
+   - Cada sugestão em 1 frase, linguagem leiga (PT-BR), sem jargão de
+     pandas/plotly. Use os MESMOS nomes de coluna do schema, entre aspas.
+   - Cubra ângulos VARIADOS: pelo menos uma de distribuição (1 variável),
+     uma de comparação entre grupos (2 variáveis), e uma cruzada
+     (3 variáveis ou mais). Não repita o mesmo tipo de gráfico em todas.
+   - Prefira combinações que envolvam colunas NÃO-PII; se sugerir algo
+     que toca PII (ex: 'race', 'sex', 'age'), faça via groupby/agregação
+     e sinalize na sugestão que precisará da autorização do usuário.
+   - Evite sugestões triviais ("ver os 10 primeiros valores", "contar
+     linhas"). Foque no que dá insight ao olhar pro nome do dataset.
+   - Termine convidando: "Quer alguma dessas, ou tem outra ideia em
+     mente?"
+
+4. Perguntar EXPLICITAMENTE quais colunas o usuário autoriza usar em
+   agregações (essa pergunta vem JUNTO das sugestões, não antes).
+5. Chamar `autorizar_colunas` com a lista que o usuário confirmar.
+
+Formato sugerido da sua mensagem ao usuário (apenas formato — adapte ao
+conteúdo do schema real):
+
+  "Carreguei o arquivo. Tem N linhas, M colunas. Detectei PII em: ...
+
+  Algumas análises que dá pra fazer:
+    (1) Distribuição de '<col>' — histograma simples.
+    (2) Comparar '<colA>' por '<colB>' — barras lado a lado.
+    (3) Tendência de '<colC>' ao longo de '<colTempo>' — linhas.
+    (4) Quebra de '<colD>' por '<colE>' e '<colF>' — mapa de calor.
+
+  Quer alguma dessas, ou tem outra ideia em mente?
+  Antes de rodar, preciso saber: quais colunas posso usar livremente?
+  As marcadas como PII vou tratar como sensíveis até você liberar."
 
 Parâmetros:
 - caminho (str): caminho local do arquivo CSV (relativo ou absoluto)
@@ -75,6 +109,42 @@ carregado. Esta é a tool que produz os gráficos e análises.
 
 VOCÊ É RESPONSÁVEL POR GERAR O CÓDIGO. Use as informações do schema retornadas
 por `carregar_dataset` e a lista de colunas em `autorizar_colunas`.
+
+ANTES DE CHAMAR ESTA TOOL — EXPLIQUE AO USUÁRIO PRIMEIRO (obrigatório):
+
+Você DEVE escrever, na conversa, uma explicação curta (1 a 3 frases) do que
+vai fazer ANTES de invocar a tool. O objetivo é que o usuário entenda a
+análise sem precisar ler uma linha de código.
+
+Regras da explicação:
+- Linguagem PT-BR, leiga, sem jargão de pandas/plotly.
+  NÃO use termos como "groupby", "agg", "merge", "dropna", "value_counts",
+  "DataFrame", "série", "filtro booleano", "pivot", "dtype". Traduza:
+  groupby -> "agrupar por", agg/mean -> "tirar a média", value_counts ->
+  "contar quantos por categoria", dropna -> "ignorar linhas sem valor",
+  filtro -> "considerar apenas as linhas onde...".
+- NÃO cite nomes de funções nem nomes de bibliotecas.
+- Comece com um verbo de ação ("Vou agrupar...", "Vou comparar...",
+  "Vou mostrar a distribuição de...").
+- Cite os NOMES DAS COLUNAS reais que entram no cálculo, entre aspas.
+- Diga qual é o TIPO DE GRÁFICO em palavra comum ("barras", "linhas",
+  "pizza", "dispersão", "histograma", "mapa de calor") — não "px.bar".
+- Se a análise envolver alguma decisão (ex.: pegou só os top 10, ignorou
+  nulos, agrupou faixa etária), MENCIONE essa decisão na explicação.
+
+Exemplos do formato esperado (apenas formato — gere para a análise pedida):
+  "Vou agrupar as linhas por 'workclass' e tirar a média de 'hours-per-week'
+   pra cada grupo, depois mostrar como barras horizontais ordenadas."
+
+  "Vou contar quantas pessoas existem em cada faixa de 'age', ignorando
+   linhas sem idade, e mostrar como histograma."
+
+  "Vou comparar a distribuição de 'income' entre 'sex', mostrando dois
+   conjuntos de barras lado a lado."
+
+Só DEPOIS dessa frase você invoca a tool. O mesmo conteúdo, ainda mais
+curto, vai como `descricao` (parâmetro abaixo) e aparece como cabeçalho
+do resumo pós-execução.
 
 REGRAS OBRIGATÓRIAS DO CÓDIGO QUE VOCÊ GERAR:
 

@@ -28,6 +28,11 @@ FUNCOES_PROIBIDAS = {
     "eval", "exec", "compile", "__import__", "open",
     "globals", "locals", "vars", "getattr", "setattr",
     "delattr", "input", "help", "breakpoint",
+    "exit", "quit",
+}
+
+NOMES_PROIBIDOS = {
+    "__builtins__", "__builtin__",
 }
 
 MODULOS_PROIBIDOS = {
@@ -80,5 +85,9 @@ def validar_codigo(codigo: str) -> tuple[bool, str]:
         if isinstance(node, ast.Name) and node.id in FUNCOES_PROIBIDAS:
             if not isinstance(node.ctx, ast.Store):
                 return False, f"Referência a função proibida: {node.id}"
+
+        if isinstance(node, ast.Name) and node.id in NOMES_PROIBIDOS:
+            if not isinstance(node.ctx, ast.Store):
+                return False, f"Nome reservado proibido: {node.id}"
 
     return True, "OK"

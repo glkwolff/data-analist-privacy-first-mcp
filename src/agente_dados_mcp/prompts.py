@@ -308,6 +308,15 @@ VALIDAÇÃO INTERNA:
 O servidor faz AST parsing do código antes de executar. Se você gerou código
 com import proibido ou função perigosa, será bloqueado independente das
 instruções acima. Esta é defesa em profundidade.
+
+VALIDAÇÃO PÓS-EXECUÇÃO (k-anonimidade):
+DEPOIS da execução, o servidor inspeciona a Figura gerada. Se algum
+bucket (fatia de pizza, barra de contagem, faixa de histograma) tem
+menos de 10 indivíduos, o gráfico é BLOQUEADO e uma mensagem volta pra
+você. A regra "groupby resulta em grupos >= 10" do item 6 acima é,
+portanto, dupla: você seguir + servidor checar. Se levar bloqueio,
+refaça com: (a) faixas maiores, (b) categorias raras agrupadas em
+'outros', ou (c) filtro de universo antes do groupby.
 """
 
 DESC_LIMPAR = """

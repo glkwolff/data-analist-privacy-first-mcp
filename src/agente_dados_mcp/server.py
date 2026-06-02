@@ -18,6 +18,7 @@ from mcp.types import ImageContent, TextContent
 from . import prompts
 from .describe import descrever
 from .executor import executar
+from .kanon import verificar as verificar_kanon
 from .loader import carregar
 from .quality import analisar
 from .renderer import fig_para_html, fig_para_png_base64, resumo_markdown
@@ -125,6 +126,10 @@ def executar_analise(codigo: str, descricao: str) -> list[Any]:
     ok_exec, fig, msg_exec = executar(codigo, SESSION.df)
     if not ok_exec:
         return [TextContent(type="text", text=msg_exec)]
+
+    ok_kanon, msg_kanon = verificar_kanon(fig)
+    if not ok_kanon:
+        return [TextContent(type="text", text=msg_kanon)]
 
     try:
         png_b64 = fig_para_png_base64(fig)

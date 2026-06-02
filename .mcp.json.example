@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "agente-dados": {
+      "command": "agente-dados-mcp"
+    }
+  }
+}

@@ -155,6 +155,54 @@ Retorno em erro (sem dataset carregado, etc.):
   {"ok": false, "erro": "..."}
 """
 
+DESC_QUALIDADE = """
+Roda um diagnóstico de qualidade do dataset SEM gerar nem executar código.
+Pensa como o checklist do analista júnior antes de pedir gráfico: o que
+falta, o que se repete, o que destoa, o que parece anômalo.
+
+QUANDO USAR:
+- Logo após `descrever_dataset`, ou diretamente quando o usuário perguntar
+  "tem dado faltando?", "tem duplicata?", "tem outlier?", "esses dados
+  estão limpos?". Use esta tool e RESPONDA em PT-BR leigo com base no
+  retorno, em vez de gerar gráfico.
+- Antes de propor um modelo / previsão / segmentação: outliers e nulos
+  podem invalidar a análise; reportar primeiro.
+
+O QUE RETORNA:
+- `nulos`: por coluna que tem pelo menos 1 nulo — {nulos, fracao}.
+- `duplicatas`: linhas que repetem outra linha por inteiro — {linhas_duplicadas, fracao}.
+- `outliers_iqr`: por coluna numérica com outliers detectados pela regra
+  de Tukey (1.5 * IQR) — {n_outliers, fracao, limite_inferior,
+  limite_superior, iqr}. NÃO trazemos os valores fora — só a contagem
+  e o limite. Colunas com IQR=0 ou menos de 4 valores são omitidas
+  (regra de Tukey não confia em tão pouco).
+- `distribuicoes_anomalas`: dicionário por coluna com pelo menos um
+  marcador anormal — "constante", "quase_constante (X% em uma categoria)",
+  "assimetria_forte (skew=±N)", "cardinalidade_alta (N valores distintos)".
+- `limiares`: os números que o detector usa, expostos pra transparência.
+
+PRIVACIDADE:
+- Idêntica à `descrever_dataset`: respeita `colunas_autorizadas`; sem
+  autorização, opera sobre o complemento das PII.
+- NUNCA inclui valor individual no retorno — só contagens, frações
+  e os limites IQR (que são percentis, agregados).
+
+DEPOIS DE CHAMAR ESTA TOOL, VOCÊ DEVE:
+- Resumir em PT-BR leigo, 3 a 6 frases. Exemplos de tradução:
+  "fracao=0.18 nulos em 'occupation'" -> "quase 1 em cada 5 linhas não
+  tem ocupação registrada".
+  "skew=3.4 em 'capital-gain'" -> "a coluna 'ganho de capital' é muito
+  desbalanceada — a maioria é zero e poucos casos extremos puxam o resto".
+- Sinalize trade-offs claros: outlier pode ser erro de digitação OU
+  caso real; NÃO sugira excluir sem pedir contexto ao usuário.
+- Se nada for anômalo, diga isso explicitamente em vez de inventar achado.
+
+Parâmetros: nenhum.
+
+Retorno em erro:
+  {"ok": false, "erro": "..."}
+"""
+
 DESC_EXECUTAR = """
 Executa código Python (pandas + plotly) LOCALMENTE contra o DataFrame
 carregado. Esta é a tool que produz os gráficos e análises.

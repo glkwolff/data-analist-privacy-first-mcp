@@ -19,6 +19,7 @@ from . import prompts
 from .describe import descrever
 from .executor import executar
 from .loader import carregar
+from .quality import analisar
 from .renderer import fig_para_html, fig_para_png_base64, resumo_markdown
 from .schema import extrair_schema
 from .state import SESSION
@@ -78,6 +79,20 @@ def descrever_dataset() -> dict[str, Any]:
             "erro": "Nenhum dataset carregado. Chame `carregar_dataset` primeiro.",
         }
     return descrever(
+        SESSION.df,
+        SESSION.colunas_pii,
+        SESSION.colunas_autorizadas,
+    )
+
+
+@mcp.tool(name="analisar_qualidade", description=prompts.DESC_QUALIDADE)
+def analisar_qualidade() -> dict[str, Any]:
+    if not SESSION.carregado:
+        return {
+            "ok": False,
+            "erro": "Nenhum dataset carregado. Chame `carregar_dataset` primeiro.",
+        }
+    return analisar(
         SESSION.df,
         SESSION.colunas_pii,
         SESSION.colunas_autorizadas,

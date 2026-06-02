@@ -12,12 +12,45 @@ do desenvolvimento, não como afterthought.
 |---|---|---|
 | Dado sensível enviado pro LLM | Tools NUNCA retornam valores individuais. Schema (estrutura) é o máximo que sai | Nomes de colunas podem revelar estrutura interna — usuário pode renomear |
 | Gráfico gerado expõe ponto individual | Operações em PII ficam limitadas a `groupby()` com grupos >= 10 linhas | Se o k=10 for baixo demais pro dataset, usuário deve ajustar manualmente |
+| Rótulos de categoria vazam em `descrever_dataset` | `top_categorias` retorna NOMES das categorias mais frequentes (ex.: "Private", "HS-grad") junto da contagem, com filtro k>=10 aplicado | Categorias raras (count < 10) NÃO são listadas — mas a contagem `categorias_pequenas_omitidas` revela QUANTAS existem. Em dataset com poucas categorias raras, isso pode ser quasi-identificador |
+| Mensagem do `kanon` revela bucket pequeno | Bloqueio de gráfico cita "faixa [X, Y) com N indivíduos" pra o LLM saber por que foi barrado e como corrigir | A própria mensagem revela que existe N pessoas (com N<10) numa faixa específica. **Leak intencional**, pra dentro do raciocínio do LLM. Trade-off: feedback acionável vs. opacidade total. Nunca chega a virar gráfico renderizado |
 | CSV no Git | `.gitignore` bloqueia `*.csv` exceto pasta `exemplos/` | Erro humano sempre possível — usar pre-commit hook como evolução |
 | Chave de API vaza | **Não há chave no nosso código.** LLM vem do cliente do usuário | Usuário ainda é responsável pela chave dele no cliente |
 
 **Invariante de privacidade:** o conteúdo retornado por qualquer tool MCP
 não contém valor individual de célula. Testes em `tests/test_schema.py`
 verificam isso explicitamente.
+
+### O que o LLM efetivamente recebe
+
+Auditoria do contrato, categorizando tudo que sai do servidor pra o LLM:
+
+| Categoria | Conteúdo | Exemplo |
+|---|---|---|
+| Metadados de schema | nomes de coluna, dtype, contagem de nulos, cardinalidade, flag PII | `{"age": {"dtype": "int64", "cardinalidade": 73, "is_pii_suspeita": true}}` |
+| Estatísticas agregadas | mean, std, percentis, contagens, frações, limites IQR, skew | `{"hours-per-week": {"mean": 40.43, "p50": 40}}` |
+| Rótulos de categoria pós-k-anon | nomes das top-N categorias com count >= 10 | `[["Private", 22696], ["Self-emp-not-inc", 2541]]` |
+| Marcadores qualitativos | "constante", "assimetria_forte (skew=X)", "cardinalidade_alta" | `{"capital-gain": {"achados": ["assimetria_forte (skew=11.95)"]}}` |
+| Conteúdo de `Figure` Plotly | dados agregados de cada trace (mean por grupo, etc.) | trace.y = [47.13, 50.15, ...] (médias por workclass×income) |
+| Metadados de bloqueio `kanon` | faixa do bucket que violou + count | "faixa [21.880, 22.160) com 1 indivíduos" |
+
+**O que o LLM NUNCA recebe:**
+
+- Nenhuma linha do dataset
+- Nenhum valor individual de célula
+- Nenhuma chave primária / identificador
+- Conteúdo de coluna PII sem autorização do usuário
+
+### Caso real do "Without-pay" — proteção funcionando
+
+Em demo com UCI Adult, gráfico de horas médias por `workclass` × `income`
+não mostrou nenhuma barra pra "Without-pay" + ">50K". O LLM concluiu
+"ninguém sem salário ganha mais de 50k". A verdade auditável é que o
+servidor **não sabe** se são 0 ou 1-9 pessoas — o filtro `n >= 10` no
+código gerado removeu o grupo se ele existia com tamanho pequeno. **A
+conclusão do LLM é especulação coerente, não observação verificável**.
+Esse é o k-anonymity funcionando: o LLM literalmente não consegue
+distinguir vazio de pequeno-mas-existente.
 
 ---
 

@@ -109,6 +109,52 @@ Retorno:
 {"ok": true, "autorizadas": [...], "nao_autorizadas": [...]}
 """
 
+DESC_DESCREVER = """
+Retorna estatísticas descritivas das colunas do dataset SEM gerar nem
+executar código. É o `df.describe()` do projeto — ponto de partida pra
+você (LLM) montar um resumo em linguagem natural do que o dataset tem.
+
+QUANDO USAR (ordem recomendada):
+1. Logo APÓS `carregar_dataset` + `autorizar_colunas`, antes de propor
+   visualizações. Dá contexto numérico real (médias, percentis, top
+   categorias) que o schema sozinho não tem.
+2. Sempre que o usuário pedir "resume", "me dá um overview", "como esse
+   dataset se distribui" — responda com o resultado desta tool em vez
+   de gerar gráficos.
+
+O QUE RETORNA:
+- `numericas`: dict por coluna numérica com mean, std, min, p25, p50,
+  p75, max, nulls.
+- `categoricas`: dict por coluna categórica com `top_categorias` (lista
+  de [valor, contagem] respeitando k-anonymity), `unique` (contagem de
+  valores distintos), `nulls`, `categorias_pequenas_omitidas` (quantas
+  categorias têm menos de 10 ocorrências e foram cortadas do top).
+- `colunas_omitidas_por_pii_nao_autorizada`: colunas PII que NÃO entraram
+  porque o usuário ainda não autorizou.
+
+PRIVACIDADE:
+- Funciona sobre `colunas_autorizadas` se você já chamou `autorizar_colunas`.
+- Se NÃO chamou ainda, roda sobre as colunas NÃO-PII por padrão (modo
+  conservador). Coluna PII só é descrita após autorização explícita.
+- `top_categorias` aplica k>=10: categorias com menos de 10 ocorrências
+  NÃO aparecem no retorno. Use o número `categorias_pequenas_omitidas`
+  pra alertar o usuário se a cauda longa for relevante.
+
+DEPOIS DE CHAMAR ESTA TOOL, VOCÊ DEVE:
+- Sintetizar em PT-BR, em 3 a 6 frases, o que o dataset parece descrever.
+- Cite ranges (min/max), médias e a categoria mais comum quando relevante.
+- Linguagem leiga — nada de "média da série numérica age é 38.5"; prefira
+  "as pessoas têm em média 38 anos, indo de 17 a 90".
+- Se `colunas_omitidas_por_pii_nao_autorizada` não estiver vazia, lembre
+  o usuário de que dá pra autorizar essas colunas pra ter um overview
+  mais completo.
+
+Parâmetros: nenhum (usa o dataset já carregado e a autorização ativa).
+
+Retorno em erro (sem dataset carregado, etc.):
+  {"ok": false, "erro": "..."}
+"""
+
 DESC_EXECUTAR = """
 Executa código Python (pandas + plotly) LOCALMENTE contra o DataFrame
 carregado. Esta é a tool que produz os gráficos e análises.

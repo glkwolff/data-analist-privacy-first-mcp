@@ -16,6 +16,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp.types import ImageContent, TextContent
 
 from . import prompts
+from .describe import descrever
 from .executor import executar
 from .loader import carregar
 from .renderer import fig_para_html, fig_para_png_base64, resumo_markdown
@@ -67,6 +68,20 @@ def autorizar_colunas(autorizadas: list[str]) -> dict[str, Any]:
     if invalidas:
         resposta["ignoradas_nao_existem"] = invalidas
     return resposta
+
+
+@mcp.tool(name="descrever_dataset", description=prompts.DESC_DESCREVER)
+def descrever_dataset() -> dict[str, Any]:
+    if not SESSION.carregado:
+        return {
+            "ok": False,
+            "erro": "Nenhum dataset carregado. Chame `carregar_dataset` primeiro.",
+        }
+    return descrever(
+        SESSION.df,
+        SESSION.colunas_pii,
+        SESSION.colunas_autorizadas,
+    )
 
 
 @mcp.tool(name="executar_analise", description=prompts.DESC_EXECUTAR)

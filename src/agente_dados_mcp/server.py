@@ -17,6 +17,7 @@ from mcp.types import ImageContent, TextContent
 
 from . import prompts
 from .executor import executar
+from .loader import carregar
 from .renderer import fig_para_html, fig_para_png_base64, resumo_markdown
 from .schema import extrair_schema
 from .state import SESSION
@@ -27,26 +28,11 @@ mcp = FastMCP("agente-dados-mcp")
 
 @mcp.tool(name="carregar_dataset", description=prompts.DESC_CARREGAR)
 def carregar_dataset(caminho: str) -> dict[str, Any]:
-    import pandas as pd
-
     caminho_expandido = os.path.expanduser(caminho)
 
-    if not os.path.exists(caminho_expandido):
-        return {"ok": False, "erro": f"Arquivo não encontrado: {caminho}"}
-
-    if not caminho_expandido.lower().endswith(".csv"):
-        return {"ok": False, "erro": "Apenas arquivos .csv são suportados no MVP."}
-
-    if not os.access(caminho_expandido, os.R_OK):
-        return {"ok": False, "erro": f"Sem permissão de leitura: {caminho}"}
-
-    try:
-        df = pd.read_csv(caminho_expandido)
-    except Exception as e:  # noqa: BLE001
-        return {"ok": False, "erro": f"Falha ao ler CSV: {type(e).__name__}: {e}"}
-
-    if df.empty:
-        return {"ok": False, "erro": "CSV não tem linhas."}
+    df, erro = carregar(caminho_expandido)
+    if erro is not None:
+        return {"ok": False, "erro": erro}
 
     SESSION.reset()
     SESSION.df = df

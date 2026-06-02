@@ -9,8 +9,14 @@ NÃO simplifique sem ler CLAUDE.md seção 7.
 """
 
 DESC_CARREGAR = """
-Carrega um arquivo CSV local na sessão do agente. Esta é a PRIMEIRA tool a
+Carrega um dataset local na sessão do agente. Esta é a PRIMEIRA tool a
 chamar em qualquer análise.
+
+FORMATOS SUPORTADOS: .csv, .parquet, .xlsx, .xls, .json (inclui JSON-Lines).
+Em Excel com várias abas, lemos a PRIMEIRA aba — se o usuário quiser outra,
+peça pra ele exportar como CSV/Parquet. Em JSON, tentamos o formato padrão
+(array de registros) e caímos pra JSON-Lines (`{...}\\n{...}\\n...`) se
+necessário.
 
 IMPORTANTE — PRIVACIDADE:
 Esta tool NUNCA expõe valores das células. Retorna apenas:

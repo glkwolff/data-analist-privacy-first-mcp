@@ -1,6 +1,6 @@
 # agente-dados-mcp
 
-> MCP server privacy-first para análise exploratória de CSVs locais.
+> MCP server privacy-first para análise exploratória de datasets locais.
 > **O código vai pro dado, o dado nunca vai pro LLM.**
 
 Funciona em qualquer cliente MCP-compatível (Claude Code, Claude Desktop,
@@ -8,7 +8,7 @@ Cursor, Windsurf, Cline, Zed, Continue.dev).
 
 ## O que ele faz
 
-1. Você carrega um CSV local.
+1. Você carrega um dataset local (CSV, Parquet, Excel `.xlsx`/`.xls`, ou JSON).
 2. O servidor extrai **apenas o schema** (nomes de colunas, tipos, contagens,
    cardinalidade, PII detectada). Nenhum valor de célula sai da sua máquina.
 3. O LLM do seu cliente (Claude, GPT, Gemini — o que estiver configurado)
@@ -105,7 +105,7 @@ ruff check src tests
 cliente MCP (Claude Code, Cursor, …)
         ↓ stdio
 agente-dados-mcp (Python)
-  ├─ carregar_dataset   →  pandas + schema + PII
+  ├─ carregar_dataset   →  CSV/Parquet/Excel/JSON + schema + PII
   ├─ autorizar_colunas  →  consent gate
   ├─ executar_analise   →  AST validator → sandbox exec → PNG + HTML
   └─ limpar_sessao      →  reset

@@ -166,6 +166,45 @@ def limpar_sessao() -> dict[str, Any]:
     return {"ok": True, "mensagem": "Sessão limpa"}
 
 
+# ---------------------------------------------------------------------------
+# Prompts (slash commands no cliente: /mcp__agente-dados__<nome>).
+# Cada um injeta um texto pronto que orienta o LLM a seguir o fluxo correto;
+# não executam nada por conta própria. Ver prompts.py.
+# ---------------------------------------------------------------------------
+
+
+@mcp.prompt(
+    name="iniciar_analise",
+    description="Inicia uma análise: carrega o arquivo, mostra schema/PII e pede autorização.",
+)
+def iniciar_analise(caminho: str = "") -> str:
+    return prompts.PROMPT_INICIAR.format(caminho=caminho or "(não informado)")
+
+
+@mcp.prompt(
+    name="resumir_dataset",
+    description="Gera um panorama estatístico em linguagem leiga do dataset carregado.",
+)
+def resumir_dataset() -> str:
+    return prompts.PROMPT_RESUMIR
+
+
+@mcp.prompt(
+    name="analisar_qualidade",
+    description="Diagnóstico de qualidade: nulos, duplicatas, outliers e anomalias.",
+)
+def prompt_analisar_qualidade() -> str:
+    return prompts.PROMPT_QUALIDADE
+
+
+@mcp.prompt(
+    name="ajuda",
+    description="Explica como o agente funciona, o fluxo de uso e as garantias de privacidade.",
+)
+def ajuda() -> str:
+    return prompts.PROMPT_FLUXO
+
+
 def main() -> None:
     """Entry point CLI — inicia o servidor MCP em stdio."""
     mcp.run()

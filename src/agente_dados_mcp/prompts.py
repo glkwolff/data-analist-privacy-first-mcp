@@ -328,3 +328,76 @@ Parâmetros: nenhum
 
 Retorno: {"ok": true, "mensagem": "Sessão limpa"}
 """
+
+
+# ---------------------------------------------------------------------------
+# PROMPTS (MCP prompts) — viram slash commands no cliente.
+#
+# No Claude Code aparecem como /mcp__agente-dados__<nome>. Diferente das tools,
+# um prompt NÃO executa nada: ele injeta um texto pronto na conversa que orienta
+# o LLM a seguir o fluxo correto. É açúcar de UX em cima das tools — quem decide
+# chamar carregar_dataset/executar_analise continua sendo o LLM.
+# ---------------------------------------------------------------------------
+
+PROMPT_INICIAR = """\
+Vamos iniciar uma análise exploratória privacy-first de um dataset local.
+
+Arquivo informado pelo usuário: {caminho}
+
+Siga este fluxo, sem pular etapas:
+
+1. Se {caminho} estiver vazio, peça ao usuário o caminho do arquivo
+   (.csv, .parquet, .xlsx, .xls ou .json) antes de continuar.
+2. Chame a tool `carregar_dataset` com esse caminho.
+3. Apresente o schema retornado de forma clara: número de linhas, colunas e
+   tipos. Lembre que NENHUM valor de célula é exposto — só estrutura.
+4. DESTAQUE as colunas detectadas como PII e explique que, por padrão,
+   NENHUMA delas pode ser usada em agregações sem autorização explícita.
+5. SUGIRA de 3 a 5 análises interessantes com base no schema (variando entre
+   distribuição, comparação entre grupos e cruzamentos).
+6. Pergunte ao usuário quais colunas ele autoriza usar. Só depois da resposta
+   dele, chame `autorizar_colunas`.
+
+Não invente autorizações. Não chame `executar_analise` ainda.
+"""
+
+PROMPT_RESUMIR = """\
+Gere um panorama do dataset que está carregado na sessão.
+
+1. Se nada estiver carregado, avise o usuário e peça pra ele rodar o fluxo de
+   carregamento primeiro (ou o slash command de iniciar análise).
+2. Chame a tool `descrever_dataset`.
+3. Sintetize o resultado em PT-BR, em 3 a 6 frases, em linguagem leiga:
+   o que o dataset parece descrever, ranges (mínimo/máximo), médias e a
+   categoria mais comum quando fizer sentido.
+4. Se houver colunas PII ainda não autorizadas que enriqueceriam o resumo,
+   lembre o usuário de que dá pra autorizá-las.
+
+Não gere gráficos aqui — só o resumo textual.
+"""
+
+PROMPT_QUALIDADE = """\
+Faça um diagnóstico de qualidade do dataset carregado.
+
+1. Se nada estiver carregado, avise e peça pra carregar um arquivo antes.
+2. Chame a tool `analisar_qualidade`.
+3. Resuma os achados em PT-BR e linguagem leiga: colunas com muitos nulos,
+   duplicatas, outliers e anomalias. Priorize o que mais compromete a análise.
+4. Sugira próximos passos práticos (ex.: ignorar linhas sem valor em tal
+   coluna, tratar uma categoria rara) sem afirmar causalidade.
+"""
+
+PROMPT_FLUXO = """\
+Explique ao usuário, de forma curta e clara, como este agente funciona e o que
+ele pode pedir. Cubra:
+
+- A ideia central: o código vai até o dado; o dado NUNCA é enviado ao LLM.
+  Você (o modelo) só enxerga estrutura (schema) e resultados agregados.
+- A ordem das etapas: carregar arquivo -> ver schema e PII -> autorizar
+  colunas -> pedir análises (que viram gráfico PNG + resumo + HTML interativo).
+- Que colunas PII (idade, raça, sexo, país, renda, etc.) exigem autorização
+  explícita e só entram via agregações com grupos grandes (k >= 10).
+- Que todo código gerado passa por um validador de segurança antes de rodar.
+
+Termine convidando o usuário a informar o caminho de um arquivo para começar.
+"""

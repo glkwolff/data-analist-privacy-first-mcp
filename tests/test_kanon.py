@@ -45,6 +45,34 @@ def test_pie_com_zero_nao_e_bloqueado() -> None:
     assert ok
 
 
+def test_pie_via_px_com_labels_ndarray_nao_quebra() -> None:
+    """Regressão: px.pie guarda labels/values como np.ndarray.
+
+    O idioma `getattr(...) or []` forçava bool(ndarray) e levantava
+    "truth value of an array ... is ambiguous". A verificação deve
+    tratar arrays sem erro e aprovar quando todas as fatias têm >= K.
+    """
+    import pandas as pd
+
+    dados = pd.DataFrame(
+        {"cat": ["a", "b", "c"], "qtd": [100, 50, 30]}
+    )
+    fig = px.pie(dados, names="cat", values="qtd")
+    assert isinstance(fig.data[0].labels, np.ndarray)  # pré-condição do bug
+    ok, _ = verificar(fig)
+    assert ok
+
+
+def test_pie_com_labels_ndarray_e_fatia_pequena_bloqueia() -> None:
+    """Mesmo com labels/values como ndarray, a regra de k ainda morde."""
+    fig = go.Figure(
+        go.Pie(labels=np.array(["a", "b", "c"]), values=np.array([100, 50, 3]))
+    )
+    ok, msg = verificar(fig)
+    assert not ok
+    assert "'c'" in msg
+
+
 # ---------------------------------------------------------------------------
 # bar
 # ---------------------------------------------------------------------------

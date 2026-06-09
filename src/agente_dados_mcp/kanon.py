@@ -48,6 +48,19 @@ def _truncar(rotulo: object, n: int = TAMANHO_MAX_LABEL) -> str:
     return txt if len(txt) <= n else txt[: n - 1] + "…"
 
 
+def _como_lista(valor: object) -> list:
+    """Converte um atributo de trace em lista, tratando None como vazio.
+
+    NÃO usar o idioma `valor or []`: quando `valor` é um array NumPy com
+    mais de um elemento, o `or` força `bool(array)` e levanta
+    "truth value of an array ... is ambiguous". Aqui checamos None
+    explicitamente.
+    """
+    if valor is None:
+        return []
+    return list(valor)
+
+
 def _eh_contagem_inteira(v: object) -> bool:
     """Heurística: o valor parece uma contagem (inteiro não-negativo)?
 
@@ -68,8 +81,8 @@ def _eh_contagem_inteira(v: object) -> bool:
 
 
 def _violacoes_pie(trace: go.Scatter, k: int) -> list[str]:
-    labels = list(getattr(trace, "labels", None) or [])
-    values = list(getattr(trace, "values", None) or [])
+    labels = _como_lista(getattr(trace, "labels", None))
+    values = _como_lista(getattr(trace, "values", None))
     out: list[str] = []
     for label, val in zip(labels, values, strict=False):
         if val is None:
@@ -145,7 +158,7 @@ def _violacoes_bar(trace: go.Bar, k: int) -> list[str]:
     if not all(_eh_contagem_inteira(v) for v in y_vals):
         # Bar com média / mediana / etc. — fora do escopo desta camada.
         return []
-    x_vals = list(getattr(trace, "x", None) or [])
+    x_vals = _como_lista(getattr(trace, "x", None))
     out: list[str] = []
     for i, y in enumerate(y_vals):
         v = float(y)

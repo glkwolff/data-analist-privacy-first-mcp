@@ -91,9 +91,10 @@ BX = 1425
 ax.add_patch(Rectangle((BX - 24, 100), 48, 810, facecolor=WARN, alpha=0.06, zorder=1))
 ax.plot([BX, BX], [105, 905], color=WARN, lw=3.6, ls=(0, (9, 7)), zorder=3)
 text(BX, 878, "FRONTEIRA", size=17, color=WARN, weight="bold", z=9)
-ax.text(BX, 335, "Os dados NUNCA cruzam esta fronteira",
-        fontsize=22, color=WARN, fontweight="bold", ha="center", va="center",
-        rotation=90, zorder=9)
+ax.text(BX, 345, "Os dados NUNCA cruzam esta fronteira",
+        fontsize=21, color=WARN, fontweight="bold", ha="center", va="center",
+        rotation=90, zorder=9,
+        bbox=dict(boxstyle="round,pad=0.6", fc=WHITE, ec=WARN, lw=1.8))
 
 # ---------------------------------------------------------------- MAQUINA: caixas
 # CSV
